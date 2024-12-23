@@ -8,8 +8,10 @@ import com.neo.client.project.model.response.ResponseDto;
 import io.jsonwebtoken.JwtException;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.AuthenticationException;
 import org.springframework.web.bind.annotation.ControllerAdvice;
 import org.springframework.web.bind.annotation.ExceptionHandler;
+import org.springframework.web.bind.annotation.ResponseBody;
 import org.springframework.web.context.request.ServletWebRequest;
 import org.springframework.web.context.request.WebRequest;
 import org.springframework.web.servlet.mvc.method.annotation.ResponseEntityExceptionHandler;
@@ -42,6 +44,22 @@ public class BaseExceptionHandler extends ResponseEntityExceptionHandler {
     public ResponseEntity<Object> handleJwtException(JwtException ex, WebRequest request) {
         String requestUri = ((ServletWebRequest)request).getRequest().getRequestURI();
         logger.error("Error in Authorization ", ex);
+        ErrorDto errorDto = ErrorDto.builder()
+                .errorCode(String.valueOf(HttpStatus.UNAUTHORIZED.value()))
+                .errorMessage(ex.getMessage())
+                .build();
+
+        return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(
+                ResponseDto.builder()
+                        .status(1)
+                        .errors(List.of(errorDto))
+                        .build());
+    }
+
+    @ExceptionHandler({ AuthenticationException.class })
+    @ResponseBody
+    public ResponseEntity<Object> handleAuthenticationException(Exception ex) {
+
         ErrorDto errorDto = ErrorDto.builder()
                 .errorCode(String.valueOf(HttpStatus.UNAUTHORIZED.value()))
                 .errorMessage(ex.getMessage())
